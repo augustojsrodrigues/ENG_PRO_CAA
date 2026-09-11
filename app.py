@@ -248,9 +248,8 @@ def render_cards(frame, concluidas=None):
         for _, linha in ordenado.iterrows()
     )
 
-    st.markdown(
-        f'<div class="course-grid">{cards}</div>',
-        unsafe_allow_html=True
+    st.html(
+        f'<div class="course-grid">{cards}</div>'
     )
 
 def ancestrais(ref, visitados=None):
@@ -269,7 +268,7 @@ def ancestrais(ref, visitados=None):
 
     return resultado
 
-st.markdown("""
+st.html("""
 <style>
 .block-container {
     padding-top: 1.6rem;
@@ -421,11 +420,11 @@ st.markdown("""
 .blue { background: #dcecff; }
 .yellow { background: #fff3c9; }
 </style>
-""", unsafe_allow_html=True)
+""")
 
-st.markdown("""
+st.html("""
 <div class="hero">
-    <h1>🎓 Engenharia de Produção — Matriz Interativa</h1>
+    <h1>🎓 Engenharia de Produção | Matriz Interativa</h1>
     <p>Obrigatórias, eletivas, áreas, pré-requisitos e disciplinas liberadas.</p>
 </div>
 
@@ -437,7 +436,7 @@ st.markdown("""
         <span class="swatch yellow"></span> Eletiva
     </div>
 </div>
-""", unsafe_allow_html=True)
+""")
 
 st.caption(
     "Passe o mouse sobre uma disciplina para ver os pré-requisitos "
@@ -581,7 +580,7 @@ with tab_mapa:
     st.divider()
 
     escolhas = {
-        f'{r["nome"]} — {r["codigo"]} [{r["ref"]}]': r["ref"]
+        f'{r["nome"]} | {r["codigo"]} [{r["ref"]}]': r["ref"]
         for _, r in df.iterrows()
     }
 
@@ -622,7 +621,7 @@ with tab_prog:
 
     label_por_ref = {
         r["ref"]:
-        f'{r["nome"]} — {r["codigo"]} [{r["ref"]}]'
+        f'{r["nome"]} | {r["codigo"]} [{r["ref"]}]'
         for _, r in opcoes.iterrows()
     }
 
