@@ -558,6 +558,8 @@ def render_matriz_periodos(concluidas=None):
         "ref"
     )
 
+    bloco_sem_periodo = ""
+
     if not sem_periodo.empty:
         cards = "".join(
             matrix_card_html(
@@ -574,20 +576,16 @@ def render_matriz_periodos(concluidas=None):
             ].sum()
         )
 
-        colunas.append(
-            f"""
-            <section class="matrix-column">
-                <div class="matrix-column-header">
-                    <strong>Sem período</strong>
-                    <span>{ch} h</span>
-                </div>
-
-                <div class="matrix-column-body">
-                    {cards}
-                </div>
-            </section>
-            """
-        )
+        bloco_sem_periodo = f"""
+        <div class="sem-periodo-wrap">
+            <div class="sem-periodo-title">
+                Sem período definido
+            </div>
+            <div class="sem-periodo-grid">
+                {cards}
+            </div>
+        </div>
+        """
 
     st.html(
         f"""
@@ -595,6 +593,7 @@ def render_matriz_periodos(concluidas=None):
             <div class="period-matrix">
                 {''.join(colunas)}
             </div>
+            {bloco_sem_periodo}
         </div>
         """
     )
@@ -706,14 +705,15 @@ def css_matriz_clicavel():
     regras = [
         """
         .st-key-periodos_clicaveis {
-            overflow-x: auto;
-            padding-bottom: .7rem;
+            overflow-x: visible;
+            padding-bottom: .35rem;
         }
 
         .st-key-periodos_clicaveis
         [data-testid="stHorizontalBlock"] {
-            min-width: 2200px;
+            width: 100%;
             align-items: flex-start;
+            gap: .25rem;
         }
 
         .st-key-areas_clicaveis {
@@ -729,13 +729,13 @@ def css_matriz_clicavel():
 
         div[class*="st-key-prog_p_ref_"] button,
         div[class*="st-key-prog_a_ref_"] button {
-            min-height: 112px;
+            min-height: 76px;
             width: 100%;
             white-space: normal;
-            border-radius: 7px;
-            padding: .55rem .55rem;
-            font-size: .76rem;
-            line-height: 1.18;
+            border-radius: 6px;
+            padding: .32rem .20rem;
+            font-size: .61rem;
+            line-height: 1.06;
             font-weight: 650;
             border-width: 1px;
             box-shadow: none;
@@ -755,24 +755,24 @@ def css_matriz_clicavel():
         }
 
         .click-column-header {
-            min-height: 55px;
+            min-height: 42px;
             display: flex;
             flex-direction: column;
             justify-content: center;
-            gap: 2px;
-            padding: 8px 7px;
-            margin-bottom: 8px;
+            gap: 1px;
+            padding: 5px 3px;
+            margin-bottom: 4px;
             border-radius: 8px;
             border:
                 1px solid
                 rgba(49, 51, 63, .22);
             background: #f2f3f5;
             text-align: center;
-            font-size: .78rem;
+            font-size: .64rem;
         }
 
         .click-column-header span {
-            font-size: .69rem;
+            font-size: .55rem;
             opacity: .65;
         }
         """
@@ -978,19 +978,11 @@ def render_matriz_clicavel_periodos():
         "ref"
     )
 
-    if not sem_periodo.empty:
-        grupos.append(
-            (
-                "Sem período",
-                sem_periodo
-            )
-        )
-
     with st.container(
         key="periodos_clicaveis"
     ):
         colunas = st.columns(
-            len(grupos),
+            10,
             gap="small"
         )
 
@@ -1015,6 +1007,37 @@ def render_matriz_clicavel_periodos():
                 )
 
                 for _, linha in grupo.iterrows():
+                    render_disciplina_clicavel(
+                        linha,
+                        "prog_p"
+                    )
+
+        if not sem_periodo.empty:
+            st.html(
+                """
+                <div class="sem-periodo-title">
+                    Sem período definido
+                </div>
+                """
+            )
+
+            colunas_sem_periodo = st.columns(
+                min(
+                    len(sem_periodo),
+                    5
+                )
+            )
+
+            for indice, (
+                _,
+                linha
+            ) in enumerate(
+                sem_periodo.iterrows()
+            ):
+                with colunas_sem_periodo[
+                    indice
+                    % len(colunas_sem_periodo)
+                ]:
                     render_disciplina_clicavel(
                         linha,
                         "prog_p"
@@ -1334,22 +1357,22 @@ st.html("""
 
 .matrix-scroll {
     width: 100%;
-    overflow-x: auto;
+    overflow-x: visible;
     padding:
-        3px 2px
-        18px 2px;
-    margin-bottom: 1.3rem;
+        3px 0
+        10px 0;
+    margin-bottom: 1rem;
 }
 
 .period-matrix {
     display: grid;
     grid-template-columns:
         repeat(
-            11,
-            minmax(190px, 1fr)
+            10,
+            minmax(0, 1fr)
         );
-    gap: 11px;
-    min-width: 2200px;
+    gap: 5px;
+    width: 100%;
     align-items: start;
 }
 
@@ -1370,36 +1393,36 @@ st.html("""
 }
 
 .matrix-column-header {
-    min-height: 54px;
+    min-height: 42px;
     display: flex;
     flex-direction: column;
     justify-content: center;
-    gap: 2px;
-    padding: 8px 10px;
-    margin-bottom: 9px;
+    gap: 1px;
+    padding: 5px 4px;
+    margin-bottom: 5px;
     border-radius: 9px;
     border:
         1px solid
         rgba(49, 51, 63, .22);
     background: #f2f3f5;
     text-align: center;
-    font-size: .83rem;
+    font-size: .68rem;
 }
 
 .matrix-column-header span {
-    font-size: .72rem;
+    font-size: .60rem;
     opacity: .65;
 }
 
 .matrix-column-body {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 4px;
 }
 
 .matrix-course {
-    min-height: 108px;
-    padding: 8px 9px;
+    min-height: 78px;
+    padding: 5px 4px;
     border:
         1px solid
         rgba(49, 51, 63, .18);
@@ -1412,23 +1435,48 @@ st.html("""
     display: flex;
     justify-content: space-between;
     gap: 7px;
-    font-size: .68rem;
+    font-size: .55rem;
     opacity: .72;
 }
 
 .matrix-course-name {
-    margin-top: 12px;
-    font-size: .79rem;
-    line-height: 1.18;
+    margin-top: 7px;
+    font-size: .63rem;
+    line-height: 1.08;
     font-weight: 700;
     text-align: center;
 }
 
 .matrix-course-code {
-    margin-top: 4px;
-    font-size: .67rem;
+    margin-top: 3px;
+    font-size: .54rem;
     opacity: .7;
     text-align: center;
+}
+
+.sem-periodo-wrap {
+    margin-top: 9px;
+    padding-top: 7px;
+    border-top:
+        1px solid
+        rgba(49, 51, 63, .12);
+}
+
+.sem-periodo-title {
+    margin-bottom: 5px;
+    font-size: .68rem;
+    font-weight: 700;
+    opacity: .75;
+}
+
+.sem-periodo-grid {
+    display: grid;
+    grid-template-columns:
+        repeat(
+            auto-fit,
+            minmax(110px, 150px)
+        );
+    gap: 5px;
 }
 
 .matrix-empty {
