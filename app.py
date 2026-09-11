@@ -193,6 +193,16 @@ def nome_ref(ref):
     return ref
 
 
+def classe_ref(ref):
+    seguro = "".join(
+        caractere
+        if caractere.isalnum()
+        else "_"
+        for caractere in str(ref)
+    )
+    return f"ref_{seguro}"
+
+
 libera = {
     ref: []
     for ref in por_ref
@@ -206,6 +216,77 @@ for _, linha in df.iterrows():
             libera[pre].append(
                 linha["ref"]
             )
+
+
+def gerar_css_relacoes():
+    regras = []
+
+    escopos = [
+        ".course-grid",
+        ".period-matrix",
+        ".area-matrix",
+    ]
+
+    for ref, linha in por_ref.items():
+        classe_origem = classe_ref(ref)
+
+        pre_requisitos = refs_de(
+            linha["pre_requisitos_refs"]
+        )
+
+        liberadas = libera.get(
+            ref,
+            []
+        )
+
+        for pre in pre_requisitos:
+            if pre not in por_ref:
+                continue
+
+            classe_pre = classe_ref(pre)
+
+            for escopo in escopos:
+                regras.append(
+                    f"""
+                    {escopo}:has(.{classe_origem}:hover)
+                    .{classe_pre} {{
+                        background: #d9f4df !important;
+                        border: 2px solid #2f8f4e !important;
+                        box-shadow:
+                            0 0 0 3px
+                            rgba(47, 143, 78, .14) !important;
+                        transform: translateY(-2px);
+                    }}
+                    """
+                )
+
+        for liberada in liberadas:
+            if liberada not in por_ref:
+                continue
+
+            classe_liberada = classe_ref(
+                liberada
+            )
+
+            for escopo in escopos:
+                regras.append(
+                    f"""
+                    {escopo}:has(.{classe_origem}:hover)
+                    .{classe_liberada} {{
+                        background: #eee3ff !important;
+                        border: 2px solid #7a4bc2 !important;
+                        box-shadow:
+                            0 0 0 3px
+                            rgba(122, 75, 194, .13) !important;
+                        transform: translateY(-2px);
+                    }}
+                    """
+                )
+
+    return "\n".join(regras)
+
+
+CSS_RELACOES = gerar_css_relacoes()
 
 
 def lista_nomes(refs):
@@ -275,8 +356,10 @@ def card_html(linha, concluidas=None):
         else ""
     )
 
+    ref_css = classe_ref(ref)
+
     return f"""
-    <div class="course-card {classe}">
+    <div class="course-card {classe} {ref_css}">
         <div class="card-top">
             <span class="ref">{html.escape(ref)}</span>
             <span class="ch">{linha["carga_horaria"]} h</span>
@@ -372,9 +455,13 @@ def matrix_card_html(linha):
         f"Libera: {abre}"
     )
 
+    ref_css = classe_ref(
+        linha["ref"]
+    )
+
     return f"""
     <div
-        class="matrix-course {classe}"
+        class="matrix-course {classe} {ref_css}"
         title="{html.escape(tooltip, quote=True)}"
     >
         <div class="matrix-course-top">
@@ -907,6 +994,30 @@ st.html("""
 </style>
 """)
 
+st.html(
+    f"""
+    <style>
+        {CSS_RELACOES}
+
+        .course-card,
+        .matrix-course {{
+            transition:
+                background .16s ease,
+                border-color .16s ease,
+                box-shadow .16s ease,
+                transform .16s ease;
+        }}
+
+        .course-card:hover,
+        .matrix-course:hover {{
+            outline:
+                3px solid
+                rgba(32, 66, 96, .16);
+        }}
+    </style>
+    """
+)
+
 
 st.html("""
 <div class="hero">
@@ -958,13 +1069,31 @@ st.html("""
         <span class="swatch yellow"></span>
         Eletiva
     </div>
+
+    <div class="legend-item">
+        <span
+            class="swatch"
+            style="background:#d9f4df; border-color:#2f8f4e;"
+        ></span>
+        Pré-requisito da disciplina em foco
+    </div>
+
+    <div class="legend-item">
+        <span
+            class="swatch"
+            style="background:#eee3ff; border-color:#7a4bc2;"
+        ></span>
+        Disciplina liberada pela disciplina em foco
+    </div>
 </div>
 """)
 
 
 st.caption(
-    "Passe o mouse sobre as disciplinas para consultar "
-    "pré-requisitos e componentes liberados."
+    "Passe o mouse sobre uma disciplina. "
+    "Os pré-requisitos ficam verdes e as disciplinas "
+    "que ela libera ficam roxas. "
+    "O texto com os detalhes continua disponível."
 )
 
 
