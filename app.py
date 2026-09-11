@@ -5,15 +5,13 @@ import pandas as pd
 import streamlit as st
 
 st.set_page_config(
-    page_title="Engenharia de Produção • Matriz Interativa",
+    page_title="Engenharia de Produção | Matriz Interativa",
     page_icon="🎓",
     layout="wide",
 )
 
 BASE_DIR = Path(__file__).resolve().parent
 
-# O app tenta encontrar a base em mais de um lugar.
-# Se ela não existir no GitHub, usa uma cópia interna para evitar FileNotFoundError.
 POSSIVEIS_ARQUIVOS = [
     BASE_DIR / "disciplinas.csv",
     BASE_DIR / "data" / "disciplinas.csv",
@@ -139,79 +137,143 @@ LIBRAS,Libras,EDUC0058,60,Obrigatória,,,,A disciplina aparece em azul na imagem
 
 @st.cache_data
 def carregar_dados():
-    arquivo_encontrado = next((p for p in POSSIVEIS_ARQUIVOS if p.exists()), None)
+    arquivo_encontrado = next(
+        (p for p in POSSIVEIS_ARQUIVOS if p.exists()),
+        None
+    )
 
     if arquivo_encontrado is not None:
-        df = pd.read_csv(arquivo_encontrado, dtype=str).fillna("")
+        dados = pd.read_csv(
+            arquivo_encontrado,
+            dtype=str
+        ).fillna("")
     else:
-        df = pd.read_csv(StringIO(CSV_EMBUTIDO), dtype=str).fillna("")
+        dados = pd.read_csv(
+            StringIO(CSV_EMBUTIDO),
+            dtype=str
+        ).fillna("")
 
-    df["carga_horaria"] = pd.to_numeric(
-        df["carga_horaria"], errors="coerce"
+    dados["carga_horaria"] = pd.to_numeric(
+        dados["carga_horaria"],
+        errors="coerce"
     ).fillna(0).astype(int)
 
-    df["periodo_num"] = pd.to_numeric(
-        df["periodo"], errors="coerce"
+    dados["periodo_num"] = pd.to_numeric(
+        dados["periodo"],
+        errors="coerce"
     )
-    return df
+
+    return dados
+
 
 df = carregar_dados()
-por_ref = {r["ref"]: r for _, r in df.iterrows()}
+
+por_ref = {
+    linha["ref"]: linha
+    for _, linha in df.iterrows()
+}
+
 
 def refs_de(valor):
     if not valor:
         return []
-    return [x.strip() for x in str(valor).split(";") if x.strip()]
+
+    return [
+        item.strip()
+        for item in str(valor).split(";")
+        if item.strip()
+    ]
+
 
 def nome_ref(ref):
     if ref in por_ref:
-        r = por_ref[ref]
-        return f'{r["nome"]} ({r["codigo"]})'
+        linha = por_ref[ref]
+        return f'{linha["nome"]} ({linha["codigo"]})'
+
     return ref
 
-# Calcula automaticamente quais disciplinas cada componente libera.
-libera = {ref: [] for ref in por_ref}
+
+libera = {
+    ref: []
+    for ref in por_ref
+}
+
 for _, linha in df.iterrows():
-    for pre in refs_de(linha["pre_requisitos_refs"]):
+    for pre in refs_de(
+        linha["pre_requisitos_refs"]
+    ):
         if pre in libera:
-            libera[pre].append(linha["ref"])
+            libera[pre].append(
+                linha["ref"]
+            )
+
 
 def lista_nomes(refs):
     if not refs:
         return "Nenhuma indicada"
-    return " • ".join(nome_ref(x) for x in refs)
+
+    return " • ".join(
+        nome_ref(ref)
+        for ref in refs
+    )
+
 
 def observacao_prereq(linha):
     partes = []
-    refs = refs_de(linha["pre_requisitos_refs"])
+
+    refs = refs_de(
+        linha["pre_requisitos_refs"]
+    )
 
     if refs:
-        partes.append(lista_nomes(refs))
+        partes.append(
+            lista_nomes(refs)
+        )
 
     if linha["pre_requisito_observacao"]:
-        partes.append(linha["pre_requisito_observacao"])
+        partes.append(
+            linha["pre_requisito_observacao"]
+        )
 
-    return " | ".join(partes) if partes else "Nenhum"
+    if not partes:
+        return "Nenhum"
+
+    return " | ".join(partes)
+
 
 def card_html(linha, concluidas=None):
     concluidas = concluidas or set()
+
     ref = linha["ref"]
     tipo = linha["tipo"]
 
-    classe = "obrigatoria" if tipo == "Obrigatória" else "eletiva"
+    classe = (
+        "obrigatoria"
+        if tipo == "Obrigatória"
+        else "eletiva"
+    )
+
     if ref in concluidas:
         classe += " concluida"
 
-    periodo = (
-        f'{linha["periodo"]}º período'
-        if linha["periodo"]
-        else (linha["area"] if linha["area"] else "Sem período indicado")
-    )
+    if linha["periodo"]:
+        local = f'{linha["periodo"]}º período'
+    elif linha["area"]:
+        local = linha["area"]
+    else:
+        local = "Sem período"
 
     pre = observacao_prereq(linha)
-    abre = lista_nomes(libera.get(ref, []))
-    badge = "Obrigatória" if tipo == "Obrigatória" else "Eletiva"
-    check = " ✓" if ref in concluidas else ""
+
+    abre = lista_nomes(
+        libera.get(ref, [])
+    )
+
+    check = (
+        " ✓"
+        if ref in concluidas
+        else ""
+    )
 
     return f"""
     <div class="course-card {classe}">
@@ -219,9 +281,18 @@ def card_html(linha, concluidas=None):
             <span class="ref">{html.escape(ref)}</span>
             <span class="ch">{linha["carga_horaria"]} h</span>
         </div>
-        <div class="course-name">{html.escape(linha["nome"])}{check}</div>
-        <div class="course-code">{html.escape(linha["codigo"])}</div>
-        <div class="course-foot">{html.escape(periodo)} · {badge}</div>
+
+        <div class="course-name">
+            {html.escape(linha["nome"])}{check}
+        </div>
+
+        <div class="course-code">
+            {html.escape(linha["codigo"])}
+        </div>
+
+        <div class="course-foot">
+            {html.escape(local)} · {html.escape(tipo)}
+        </div>
 
         <div class="course-tooltip">
             <b>Pré-requisitos</b><br>
@@ -233,73 +304,388 @@ def card_html(linha, concluidas=None):
     </div>
     """
 
-def render_cards(frame, concluidas=None):
+
+def render_cards(
+    frame,
+    concluidas=None,
+    ordenar_por_ref=False
+):
     if frame.empty:
-        st.info("Nenhuma disciplina encontrada para este filtro.")
+        st.info(
+            "Nenhuma disciplina encontrada."
+        )
         return
 
-    ordenado = frame.copy().sort_values(
-        by=["periodo_num", "area", "ref"],
-        na_position="last"
-    )
+    ordenado = frame.copy()
+
+    if ordenar_por_ref:
+        ordenado = ordenado.sort_values(
+            by=["ref"]
+        )
+    else:
+        ordenado = ordenado.sort_values(
+            by=[
+                "periodo_num",
+                "area",
+                "ref"
+            ],
+            na_position="last"
+        )
 
     cards = "".join(
-        card_html(linha, concluidas)
+        card_html(
+            linha,
+            concluidas
+        )
         for _, linha in ordenado.iterrows()
     )
 
     st.html(
-        f'<div class="course-grid">{cards}</div>'
+        f"""
+        <div class="course-grid">
+            {cards}
+        </div>
+        """
     )
 
-def ancestrais(ref, visitados=None):
-    visitados = visitados or set()
 
-    if ref in visitados or ref not in por_ref:
-        return set()
+def matrix_card_html(linha):
+    tipo = linha["tipo"]
 
-    visitados.add(ref)
-    resultado = set()
+    classe = (
+        "obrigatoria"
+        if tipo == "Obrigatória"
+        else "eletiva"
+    )
 
-    for pre in refs_de(por_ref[ref]["pre_requisitos_refs"]):
-        if pre in por_ref:
-            resultado.add(pre)
-            resultado |= ancestrais(pre, visitados)
+    pre = observacao_prereq(linha)
 
-    return resultado
+    abre = lista_nomes(
+        libera.get(
+            linha["ref"],
+            []
+        )
+    )
+
+    tooltip = (
+        f"Pré-requisitos: {pre}\n"
+        f"Libera: {abre}"
+    )
+
+    return f"""
+    <div
+        class="matrix-course {classe}"
+        title="{html.escape(tooltip, quote=True)}"
+    >
+        <div class="matrix-course-top">
+            <span>{html.escape(linha["ref"])}</span>
+            <span>{linha["carga_horaria"]} h</span>
+        </div>
+
+        <div class="matrix-course-name">
+            {html.escape(linha["nome"])}
+        </div>
+
+        <div class="matrix-course-code">
+            {html.escape(linha["codigo"])}
+        </div>
+    </div>
+    """
+
+
+def render_matriz_periodos():
+    frame = df[
+        df["origem"] == "Matriz por período"
+    ].copy()
+
+    colunas = []
+
+    for periodo in range(1, 11):
+        grupo = frame[
+            frame["periodo_num"] == periodo
+        ].copy().sort_values(
+            "ref"
+        )
+
+        cards = "".join(
+            matrix_card_html(linha)
+            for _, linha in grupo.iterrows()
+        )
+
+        if not cards:
+            cards = """
+            <div class="matrix-empty">
+                Sem disciplina alocada
+            </div>
+            """
+
+        ch = int(
+            grupo["carga_horaria"].sum()
+        )
+
+        colunas.append(
+            f"""
+            <section class="matrix-column">
+                <div class="matrix-column-header">
+                    <strong>{periodo}º Período</strong>
+                    <span>{ch} h</span>
+                </div>
+
+                <div class="matrix-column-body">
+                    {cards}
+                </div>
+            </section>
+            """
+        )
+
+    sem_periodo = frame[
+        frame["periodo"] == ""
+    ].copy().sort_values(
+        "ref"
+    )
+
+    if not sem_periodo.empty:
+        cards = "".join(
+            matrix_card_html(linha)
+            for _, linha
+            in sem_periodo.iterrows()
+        )
+
+        ch = int(
+            sem_periodo[
+                "carga_horaria"
+            ].sum()
+        )
+
+        colunas.append(
+            f"""
+            <section class="matrix-column">
+                <div class="matrix-column-header">
+                    <strong>Sem período</strong>
+                    <span>{ch} h</span>
+                </div>
+
+                <div class="matrix-column-body">
+                    {cards}
+                </div>
+            </section>
+            """
+        )
+
+    st.html(
+        f"""
+        <div class="matrix-scroll">
+            <div class="period-matrix">
+                {''.join(colunas)}
+            </div>
+        </div>
+        """
+    )
+
+
+def render_matriz_areas():
+    frame = df[
+        df["origem"] == "Matriz por área"
+    ].copy()
+
+    areas = sorted(
+        [
+            area
+            for area
+            in frame["area"].unique().tolist()
+            if area
+        ],
+        key=lambda texto: int(
+            texto.split(".")[0]
+        )
+    )
+
+    colunas = []
+
+    for area in areas:
+        grupo = frame[
+            frame["area"] == area
+        ].copy().sort_values(
+            "ref"
+        )
+
+        cards = "".join(
+            matrix_card_html(linha)
+            for _, linha
+            in grupo.iterrows()
+        )
+
+        ch = int(
+            grupo[
+                "carga_horaria"
+            ].sum()
+        )
+
+        colunas.append(
+            f"""
+            <section class="matrix-column area-column">
+                <div class="matrix-column-header">
+                    <strong>{html.escape(area)}</strong>
+                    <span>{ch} h</span>
+                </div>
+
+                <div class="matrix-column-body">
+                    {cards}
+                </div>
+            </section>
+            """
+        )
+
+    st.html(
+        f"""
+        <div class="matrix-scroll">
+            <div class="area-matrix">
+                {''.join(colunas)}
+            </div>
+        </div>
+        """
+    )
+
 
 st.html("""
 <style>
+
 .block-container {
-    padding-top: 1.6rem;
+    padding-top: 1.5rem;
     padding-bottom: 3rem;
 }
 
 .hero {
-    padding: 1.25rem 1.4rem;
-    border: 1px solid rgba(49,51,63,.16);
-    border-radius: 18px;
-    margin-bottom: 1rem;
-    background: linear-gradient(
-        120deg,
-        rgba(220,235,255,.55),
-        rgba(255,248,214,.45)
-    );
+    position: relative;
+    overflow: hidden;
+    padding: 2rem 2.2rem;
+    border: 1px solid rgba(18, 72, 120, .18);
+    border-radius: 24px;
+    margin-bottom: 1.1rem;
+    background:
+        radial-gradient(
+            circle at top right,
+            rgba(255, 221, 102, .34),
+            transparent 34%
+        ),
+        linear-gradient(
+            135deg,
+            rgba(224, 239, 255, .95),
+            rgba(247, 250, 252, .98) 52%,
+            rgba(255, 248, 218, .92)
+        );
+    box-shadow:
+        0 10px 30px
+        rgba(30, 64, 95, .08);
+}
+
+.hero::after {
+    content: "";
+    position: absolute;
+    width: 250px;
+    height: 250px;
+    border-radius: 50%;
+    right: -90px;
+    bottom: -140px;
+    background: rgba(47, 111, 176, .08);
+}
+
+.hero-kicker {
+    display: inline-block;
+    margin-bottom: .65rem;
+    padding: .34rem .68rem;
+    border-radius: 999px;
+    background: rgba(47, 111, 176, .10);
+    color: #235b8f;
+    font-size: .78rem;
+    font-weight: 700;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+}
+
+.hero-university {
+    margin: 0;
+    font-size: 1.02rem;
+    font-weight: 700;
+    color: #2b4f73;
+}
+
+.hero-campus {
+    margin: .15rem 0 0 0;
+    font-size: .93rem;
+    color: #52677b;
 }
 
 .hero h1 {
-    margin: 0;
-    font-size: 2rem;
+    margin: .9rem 0 .35rem 0;
+    font-size: clamp(2rem, 4vw, 3.25rem);
+    line-height: 1.04;
+    color: #1f3347;
+    letter-spacing: -.025em;
 }
 
-.hero p {
-    margin: .35rem 0 0 0;
-    opacity: .78;
+.hero-subtitle {
+    max-width: 900px;
+    margin: 0;
+    font-size: 1rem;
+    line-height: 1.55;
+    color: #5c6875;
+}
+
+.hero-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .55rem;
+    margin-top: 1.2rem;
+}
+
+.hero-badge {
+    padding: .42rem .72rem;
+    border: 1px solid rgba(47, 111, 176, .14);
+    border-radius: 999px;
+    background: rgba(255, 255, 255, .72);
+    color: #31495f;
+    font-size: .78rem;
+    font-weight: 600;
+}
+
+.legend {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin: .4rem 0 1rem 0;
+}
+
+.legend-item {
+    display: flex;
+    gap: 7px;
+    align-items: center;
+    font-size: .86rem;
+    opacity: .82;
+}
+
+.swatch {
+    width: 18px;
+    height: 18px;
+    border-radius: 5px;
+    border: 1px solid rgba(0, 0, 0, .15);
+}
+
+.blue {
+    background: #dcecff;
+}
+
+.yellow {
+    background: #fff3c9;
 }
 
 .course-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+    grid-template-columns:
+        repeat(
+            auto-fill,
+            minmax(210px, 1fr)
+        );
     gap: 13px;
     overflow: visible;
     margin-top: .75rem;
@@ -308,31 +694,39 @@ st.html("""
 
 .course-card {
     position: relative;
-    min-height: 152px;
+    min-height: 150px;
     padding: 12px 13px 13px 13px;
     border-radius: 14px;
-    border: 1px solid rgba(49,51,63,.18);
-    box-shadow: 0 2px 7px rgba(0,0,0,.04);
-    transition: transform .14s ease, box-shadow .14s ease;
+    border: 1px solid rgba(49, 51, 63, .18);
+    box-shadow: 0 2px 7px rgba(0, 0, 0, .04);
+    transition:
+        transform .14s ease,
+        box-shadow .14s ease;
     overflow: visible;
 }
 
 .course-card:hover {
     transform: translateY(-2px);
-    box-shadow: 0 8px 20px rgba(0,0,0,.12);
+    box-shadow:
+        0 8px 20px
+        rgba(0, 0, 0, .12);
     z-index: 50;
 }
 
-.course-card.obrigatoria {
+.course-card.obrigatoria,
+.matrix-course.obrigatoria {
     background: #dcecff;
 }
 
-.course-card.eletiva {
+.course-card.eletiva,
+.matrix-course.eletiva {
     background: #fff3c9;
 }
 
 .course-card.concluida {
-    outline: 3px solid rgba(35,145,75,.35);
+    outline:
+        3px solid
+        rgba(35, 145, 75, .35);
 }
 
 .card-top {
@@ -381,97 +775,233 @@ st.html("""
     line-height: 1.35;
     pointer-events: none;
     transition: opacity .12s ease;
-    box-shadow: 0 10px 28px rgba(0,0,0,.22);
+    box-shadow:
+        0 10px 28px
+        rgba(0, 0, 0, .22);
 }
 
-.course-card:hover .course-tooltip {
+.course-card:hover
+.course-tooltip {
     visibility: visible;
     opacity: 1;
 }
 
 .course-tooltip hr {
     border: 0;
-    border-top: 1px solid rgba(255,255,255,.2);
+    border-top:
+        1px solid
+        rgba(255, 255, 255, .2);
     margin: 8px 0;
 }
 
-.legend {
-    display: flex;
-    gap: 12px;
-    flex-wrap: wrap;
-    margin: .4rem 0 1rem 0;
+.matrix-scroll {
+    width: 100%;
+    overflow-x: auto;
+    padding:
+        3px 2px
+        18px 2px;
+    margin-bottom: 1.3rem;
 }
 
-.legend-item {
-    display: flex;
-    gap: 7px;
-    align-items: center;
-    font-size: .86rem;
-    opacity: .82;
+.period-matrix {
+    display: grid;
+    grid-template-columns:
+        repeat(
+            11,
+            minmax(190px, 1fr)
+        );
+    gap: 11px;
+    min-width: 2200px;
+    align-items: start;
 }
 
-.swatch {
-    width: 18px;
-    height: 18px;
+.area-matrix {
+    display: grid;
+    grid-template-columns:
+        repeat(
+            10,
+            minmax(205px, 1fr)
+        );
+    gap: 11px;
+    min-width: 2200px;
+    align-items: start;
+}
+
+.matrix-column {
+    min-width: 0;
+}
+
+.matrix-column-header {
+    min-height: 54px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 2px;
+    padding: 8px 10px;
+    margin-bottom: 9px;
+    border-radius: 9px;
+    border:
+        1px solid
+        rgba(49, 51, 63, .22);
+    background: #f2f3f5;
+    text-align: center;
+    font-size: .83rem;
+}
+
+.matrix-column-header span {
+    font-size: .72rem;
+    opacity: .65;
+}
+
+.matrix-column-body {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.matrix-course {
+    min-height: 108px;
+    padding: 8px 9px;
+    border:
+        1px solid
+        rgba(49, 51, 63, .18);
     border-radius: 5px;
-    border: 1px solid rgba(0,0,0,.15);
+    box-sizing: border-box;
+    cursor: help;
 }
 
-.blue { background: #dcecff; }
-.yellow { background: #fff3c9; }
+.matrix-course-top {
+    display: flex;
+    justify-content: space-between;
+    gap: 7px;
+    font-size: .68rem;
+    opacity: .72;
+}
+
+.matrix-course-name {
+    margin-top: 12px;
+    font-size: .79rem;
+    line-height: 1.18;
+    font-weight: 700;
+    text-align: center;
+}
+
+.matrix-course-code {
+    margin-top: 4px;
+    font-size: .67rem;
+    opacity: .7;
+    text-align: center;
+}
+
+.matrix-empty {
+    padding: 13px 8px;
+    border:
+        1px dashed
+        rgba(49, 51, 63, .2);
+    border-radius: 6px;
+    text-align: center;
+    font-size: .75rem;
+    opacity: .55;
+}
+
 </style>
 """)
 
+
 st.html("""
 <div class="hero">
-    <h1>🎓 Engenharia de Produção | Matriz Interativa</h1>
-    <p>Obrigatórias, eletivas, áreas, pré-requisitos e disciplinas liberadas.</p>
+    <div class="hero-kicker">
+        Matriz Curricular Interativa
+    </div>
+
+    <p class="hero-university">
+        Universidade Federal de Pernambuco (UFPE)
+    </p>
+
+    <p class="hero-campus">
+        Centro Acadêmico do Agreste (CAA)
+    </p>
+
+    <h1>
+        Engenharia de Produção
+    </h1>
+
+    <p class="hero-subtitle">
+        Visualize a matriz curricular, consulte pré-requisitos,
+        veja quais disciplinas são liberadas e explore
+        os componentes de cada área do curso.
+    </p>
+
+    <div class="hero-badges">
+        <span class="hero-badge">
+            Disciplinas obrigatórias
+        </span>
+        <span class="hero-badge">
+            Disciplinas eletivas
+        </span>
+        <span class="hero-badge">
+            Pré-requisitos
+        </span>
+        <span class="hero-badge">
+            Áreas da Engenharia de Produção
+        </span>
+    </div>
 </div>
 
 <div class="legend">
     <div class="legend-item">
-        <span class="swatch blue"></span> Obrigatória
+        <span class="swatch blue"></span>
+        Obrigatória
     </div>
+
     <div class="legend-item">
-        <span class="swatch yellow"></span> Eletiva
+        <span class="swatch yellow"></span>
+        Eletiva
     </div>
 </div>
 """)
 
+
 st.caption(
-    "Passe o mouse sobre uma disciplina para ver os pré-requisitos "
-    "e quais disciplinas ela libera."
+    "Passe o mouse sobre as disciplinas para consultar "
+    "pré-requisitos e componentes liberados."
 )
 
-tab_obr, tab_areas, tab_mapa, tab_prog = st.tabs(
+
+tab_periodos, tab_areas, tab_matrizes, tab_prog = st.tabs(
     [
-        "📘 Obrigatórias",
+        "📅 Por período",
         "🧭 Áreas",
-        "🗺️ Mapa completo",
+        "📋 Matrizes completas",
         "✅ Meu progresso",
     ]
 )
 
-with tab_obr:
-    obrig = df[df["tipo"] == "Obrigatória"].copy()
 
-    c1, c2, c3 = st.columns(3)
-    c1.metric("Disciplinas obrigatórias", len(obrig))
-    c2.metric(
-        "Carga horária cadastrada",
-        f'{obrig["carga_horaria"].sum()} h'
-    )
-    c3.metric(
-        "Com área explícita",
-        int((obrig["area"] != "").sum())
+with tab_periodos:
+    st.subheader(
+        "Matriz curricular organizada por período"
     )
 
-    st.subheader("Todas as obrigatórias juntas")
-    render_cards(obrig)
+    st.caption(
+        "Esta visualização reproduz a organização "
+        "da matriz principal."
+    )
+
+    render_matriz_periodos()
+
 
 with tab_areas:
     areas = sorted(
-        [x for x in df["area"].unique().tolist() if x]
+        [
+            area
+            for area
+            in df["area"].unique().tolist()
+            if area
+        ],
+        key=lambda texto: int(
+            texto.split(".")[0]
+        )
     )
 
     area = st.selectbox(
@@ -479,173 +1009,129 @@ with tab_areas:
         areas
     )
 
-    area_df = df[df["area"] == area].copy()
+    area_df = df[
+        df["area"] == area
+    ].copy().sort_values(
+        "ref"
+    )
+
     obrig_area = area_df[
         area_df["tipo"] == "Obrigatória"
     ]
+
     elet_area = area_df[
         area_df["tipo"] == "Eletiva"
     ]
 
     c1, c2, c3 = st.columns(3)
-    c1.metric("Obrigatórias da área", len(obrig_area))
-    c2.metric("Eletivas da área", len(elet_area))
+
+    c1.metric(
+        "Obrigatórias",
+        len(obrig_area)
+    )
+
+    c2.metric(
+        "Eletivas",
+        len(elet_area)
+    )
+
     c3.metric(
         "Carga horária listada",
         f'{area_df["carga_horaria"].sum()} h'
     )
 
-    st.subheader("Obrigatórias da área")
-    render_cards(obrig_area)
-
-    st.subheader("Eletivas da área")
-    render_cards(elet_area)
-
-    deps = set()
-
-    for ref in area_df["ref"]:
-        deps |= ancestrais(ref)
-
-    base_obrig = df[
-        (df["ref"].isin(deps))
-        & (df["tipo"] == "Obrigatória")
-        & (df["area"] != area)
-    ]
-
-    if not base_obrig.empty:
-        st.subheader(
-            "Base obrigatória que aparece nos pré-requisitos"
-        )
-        st.caption(
-            "Estas disciplinas não são classificadas como componentes "
-            "da área; elas aparecem na cadeia de pré-requisitos."
-        )
-        render_cards(base_obrig)
-
-    st.info(
-        "A matriz mostra as disciplinas pertencentes às áreas, mas ainda "
-        "não informa a regra de quantas eletivas precisam ser cursadas "
-        "para completar cada área."
+    st.subheader(
+        f"Disciplinas de {area}"
     )
 
-with tab_mapa:
-    col1, col2, col3 = st.columns(3)
-
-    tipos = col1.multiselect(
-        "Tipo",
-        ["Obrigatória", "Eletiva"],
-        default=["Obrigatória", "Eletiva"]
+    st.caption(
+        "Aqui aparecem somente as disciplinas "
+        "que pertencem à área selecionada."
     )
 
-    areas_opts = sorted(
-        [x for x in df["area"].unique().tolist() if x]
+    render_cards(
+        area_df,
+        ordenar_por_ref=True
     )
 
-    areas_sel = col2.multiselect(
-        "Área",
-        areas_opts
+
+with tab_matrizes:
+    st.subheader(
+        "Tabela 1 | Disciplinas organizadas por período"
     )
 
-    periodos_opts = sorted(
-        [
-            int(x)
-            for x in df["periodo_num"]
-            .dropna()
-            .unique()
-            .tolist()
-        ]
+    st.caption(
+        "A organização segue a primeira matriz enviada."
     )
 
-    periodos_sel = col3.multiselect(
-        "Período",
-        periodos_opts
-    )
-
-    filtrado = df[
-        df["tipo"].isin(tipos)
-    ].copy()
-
-    if areas_sel:
-        filtrado = filtrado[
-            filtrado["area"].isin(areas_sel)
-        ]
-
-    if periodos_sel:
-        filtrado = filtrado[
-            filtrado["periodo_num"].isin(periodos_sel)
-        ]
-
-    render_cards(filtrado)
+    render_matriz_periodos()
 
     st.divider()
 
-    escolhas = {
-        f'{r["nome"]} | {r["codigo"]} [{r["ref"]}]': r["ref"]
-        for _, r in df.iterrows()
-    }
-
-    escolha = st.selectbox(
-        "Detalhes de uma disciplina",
-        list(escolhas.keys())
+    st.subheader(
+        "Tabela 2 | Disciplinas organizadas por área"
     )
 
-    ref = escolhas[escolha]
-    r = por_ref[ref]
+    st.caption(
+        "Nesta tabela as disciplinas obrigatórias e eletivas "
+        "aparecem misturadas nas respectivas áreas, "
+        "como na segunda matriz enviada."
+    )
 
-    c1, c2 = st.columns(2)
+    render_matriz_areas()
 
-    with c1:
-        st.markdown(f"**Tipo:** {r['tipo']}")
-        st.markdown(
-            f"**Carga horária:** {r['carga_horaria']} h"
-        )
-        st.markdown(
-            f"**Período/área:** "
-            f"{r['periodo'] or r['area'] or 'Não indicado'}"
-        )
-
-    with c2:
-        st.markdown("**Pré-requisitos:**")
-        st.write(observacao_prereq(r))
-
-        st.markdown("**Disciplinas que libera:**")
-        st.write(
-            lista_nomes(libera.get(ref, []))
-        )
 
 with tab_prog:
     opcoes = df.sort_values(
-        ["periodo_num", "area", "ref"],
+        [
+            "periodo_num",
+            "area",
+            "ref"
+        ],
         na_position="last"
     )
 
     label_por_ref = {
-        r["ref"]:
-        f'{r["nome"]} | {r["codigo"]} [{r["ref"]}]'
-        for _, r in opcoes.iterrows()
+        linha["ref"]:
+        (
+            f'{linha["nome"]} | '
+            f'{linha["codigo"]} '
+            f'[{linha["ref"]}]'
+        )
+        for _, linha
+        in opcoes.iterrows()
     }
 
     concluidas = st.multiselect(
         "Marque as disciplinas já concluídas",
-        options=list(label_por_ref.keys()),
-        format_func=lambda x: label_por_ref[x]
+        options=list(
+            label_por_ref.keys()
+        ),
+        format_func=lambda ref:
+            label_por_ref[ref]
     )
 
-    concluidas = set(concluidas)
+    concluidas = set(
+        concluidas
+    )
 
     obrig = df[
         df["tipo"] == "Obrigatória"
     ]
 
     obrig_concl = obrig[
-        obrig["ref"].isin(concluidas)
+        obrig["ref"].isin(
+            concluidas
+        )
     ]
 
-    pct = (
-        0
-        if len(obrig) == 0
-        else len(obrig_concl) / len(obrig)
-    )
+    if len(obrig) == 0:
+        pct = 0
+    else:
+        pct = (
+            len(obrig_concl)
+            / len(obrig)
+        )
 
     c1, c2, c3 = st.columns(3)
 
@@ -655,70 +1141,90 @@ with tab_prog:
     )
 
     c2.metric(
-        "CH obrigatória concluída",
+        "Carga horária obrigatória concluída",
         f'{obrig_concl["carga_horaria"].sum()} h'
     )
 
     c3.metric(
-        "Progresso por quantidade",
+        "Progresso",
         f"{pct:.0%}"
     )
 
     st.progress(
-        min(max(pct, 0), 1)
+        min(
+            max(pct, 0),
+            1
+        )
     )
 
     liberadas_agora = []
     bloqueadas_incerto = []
 
-    for _, r in df.iterrows():
-        ref = r["ref"]
+    for _, linha in df.iterrows():
+        ref = linha["ref"]
 
         if ref in concluidas:
             continue
 
-        prs = refs_de(
-            r["pre_requisitos_refs"]
+        pre_requisitos = refs_de(
+            linha["pre_requisitos_refs"]
         )
 
         tem_obs_incerta = (
-            bool(r["pre_requisito_observacao"])
-            and not prs
+            bool(
+                linha[
+                    "pre_requisito_observacao"
+                ]
+            )
+            and not pre_requisitos
         )
 
         if tem_obs_incerta:
-            bloqueadas_incerto.append(ref)
+            bloqueadas_incerto.append(
+                ref
+            )
             continue
 
         if all(
-            p in concluidas
-            for p in prs
+            pre in concluidas
+            for pre
+            in pre_requisitos
         ):
-            liberadas_agora.append(ref)
+            liberadas_agora.append(
+                ref
+            )
 
     st.subheader(
-        "Disciplinas liberadas com o que foi marcado"
+        "Disciplinas liberadas"
     )
 
     render_cards(
-        df[df["ref"].isin(liberadas_agora)],
+        df[
+            df["ref"].isin(
+                liberadas_agora
+            )
+        ],
         concluidas
     )
 
     if bloqueadas_incerto:
         with st.expander(
-            "Disciplinas com pré-requisito ainda não confirmado"
+            "Disciplinas com informação "
+            "de pré-requisito ainda não confirmada"
         ):
             for ref in bloqueadas_incerto:
-                r = por_ref[ref]
+                linha = por_ref[ref]
+
                 st.write(
-                    f"• {r['nome']} ({r['codigo']}): "
-                    f"{r['pre_requisito_observacao']}"
+                    f'• {linha["nome"]} '
+                    f'({linha["codigo"]}): '
+                    f'{linha["pre_requisito_observacao"]}'
                 )
+
 
 st.divider()
 
 st.caption(
-    "Base transcrita das matrizes fornecidas. "
-    "Quando a matriz mostra '??', o componente foi tratado como sem pré-requisito."
+    "Quando a matriz apresenta ??, "
+    "a disciplina é tratada como sem pré-requisito."
 )
