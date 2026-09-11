@@ -193,6 +193,20 @@ def nome_ref(ref):
     return ref
 
 
+def nome_area(area):
+    texto = str(area).strip()
+
+    partes = texto.split(".", 1)
+
+    if (
+        len(partes) == 2
+        and partes[0].strip().isdigit()
+    ):
+        return partes[1].strip()
+
+    return texto
+
+
 def classe_ref(ref):
     seguro = "".join(
         caractere
@@ -340,7 +354,9 @@ def card_html(linha, concluidas=None):
     if linha["periodo"]:
         local = f'{linha["periodo"]}º período'
     elif linha["area"]:
-        local = linha["area"]
+        local = nome_area(
+            linha["area"]
+        )
     else:
         local = "Sem período"
 
@@ -612,7 +628,7 @@ def render_matriz_areas():
             f"""
             <section class="matrix-column area-column">
                 <div class="matrix-column-header">
-                    <strong>{html.escape(area)}</strong>
+                    <strong>{html.escape(nome_area(area))}</strong>
                     <span>{ch} h</span>
                 </div>
 
@@ -1135,7 +1151,8 @@ with tab_areas:
 
     area = st.selectbox(
         "Selecione a área",
-        areas
+        areas,
+        format_func=nome_area
     )
 
     area_df = df[
@@ -1170,7 +1187,7 @@ with tab_areas:
     )
 
     st.subheader(
-        f"Disciplinas de {area}"
+        f"Disciplinas de {nome_area(area)}"
     )
 
     st.caption(
