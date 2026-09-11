@@ -667,6 +667,421 @@ def render_matriz_areas(concluidas=None):
     )
 
 
+def obter_cursadas():
+    if "disciplinas_cursadas" not in st.session_state:
+        st.session_state["disciplinas_cursadas"] = []
+
+    return set(
+        st.session_state["disciplinas_cursadas"]
+    )
+
+
+def alternar_disciplina(ref):
+    cursadas = obter_cursadas()
+
+    if ref in cursadas:
+        cursadas.remove(ref)
+    else:
+        cursadas.add(ref)
+
+    st.session_state["disciplinas_cursadas"] = sorted(
+        cursadas
+    )
+
+
+def limpar_disciplinas_cursadas():
+    st.session_state["disciplinas_cursadas"] = []
+
+
+def chave_card_clicavel(prefixo, ref):
+    return (
+        f"{prefixo}_"
+        f"{classe_ref(ref)}"
+    )
+
+
+def css_matriz_clicavel():
+    cursadas = obter_cursadas()
+
+    regras = [
+        """
+        .st-key-periodos_clicaveis {
+            overflow-x: auto;
+            padding-bottom: .7rem;
+        }
+
+        .st-key-periodos_clicaveis
+        [data-testid="stHorizontalBlock"] {
+            min-width: 2200px;
+            align-items: flex-start;
+        }
+
+        .st-key-areas_clicaveis {
+            overflow-x: auto;
+            padding-bottom: .7rem;
+        }
+
+        .st-key-areas_clicaveis
+        [data-testid="stHorizontalBlock"] {
+            min-width: 2200px;
+            align-items: flex-start;
+        }
+
+        div[class*="st-key-prog_p_ref_"] button,
+        div[class*="st-key-prog_a_ref_"] button {
+            min-height: 112px;
+            width: 100%;
+            white-space: normal;
+            border-radius: 7px;
+            padding: .55rem .55rem;
+            font-size: .76rem;
+            line-height: 1.18;
+            font-weight: 650;
+            border-width: 1px;
+            box-shadow: none;
+            transition:
+                background .16s ease,
+                border-color .16s ease,
+                box-shadow .16s ease,
+                transform .16s ease;
+        }
+
+        div[class*="st-key-prog_p_ref_"] button:hover,
+        div[class*="st-key-prog_a_ref_"] button:hover {
+            transform: translateY(-2px);
+            box-shadow:
+                0 7px 18px
+                rgba(0, 0, 0, .10);
+        }
+
+        .click-column-header {
+            min-height: 55px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            gap: 2px;
+            padding: 8px 7px;
+            margin-bottom: 8px;
+            border-radius: 8px;
+            border:
+                1px solid
+                rgba(49, 51, 63, .22);
+            background: #f2f3f5;
+            text-align: center;
+            font-size: .78rem;
+        }
+
+        .click-column-header span {
+            font-size: .69rem;
+            opacity: .65;
+        }
+        """
+    ]
+
+    # Cor normal e cor de disciplina já cursada.
+    for ref, linha in por_ref.items():
+        if ref in cursadas:
+            fundo = "#ffd9d9"
+            borda = "#c93636"
+            sombra = "rgba(201, 54, 54, .12)"
+        elif linha["tipo"] == "Obrigatória":
+            fundo = "#dcecff"
+            borda = "rgba(49, 51, 63, .18)"
+            sombra = "rgba(0, 0, 0, 0)"
+        else:
+            fundo = "#fff3c9"
+            borda = "rgba(49, 51, 63, .18)"
+            sombra = "rgba(0, 0, 0, 0)"
+
+        for prefixo in [
+            "prog_p",
+            "prog_a",
+        ]:
+            chave = chave_card_clicavel(
+                prefixo,
+                ref
+            )
+
+            regras.append(
+                f"""
+                .st-key-{chave} button {{
+                    background:
+                        {fundo} !important;
+                    border-color:
+                        {borda} !important;
+                    box-shadow:
+                        0 0 0 3px
+                        {sombra} !important;
+                    color:
+                        #1f2937 !important;
+                }}
+                """
+            )
+
+    # Ao passar o mouse, os pré-requisitos ficam verdes
+    # e as disciplinas liberadas ficam roxas.
+    for ref, linha in por_ref.items():
+        origens = [
+            f".st-key-{chave_card_clicavel('prog_p', ref)} button:hover",
+            f".st-key-{chave_card_clicavel('prog_a', ref)} button:hover",
+        ]
+
+        for origem in origens:
+            for pre in refs_de(
+                linha["pre_requisitos_refs"]
+            ):
+                if pre not in por_ref:
+                    continue
+
+                alvos = [
+                    f".st-key-{chave_card_clicavel('prog_p', pre)} button",
+                    f".st-key-{chave_card_clicavel('prog_a', pre)} button",
+                ]
+
+                for alvo in alvos:
+                    regras.append(
+                        f"""
+                        body:has({origem})
+                        {alvo} {{
+                            background:
+                                #d9f4df !important;
+                            border:
+                                2px solid
+                                #2f8f4e !important;
+                            box-shadow:
+                                0 0 0 3px
+                                rgba(
+                                    47,
+                                    143,
+                                    78,
+                                    .14
+                                ) !important;
+                        }}
+                        """
+                    )
+
+            for liberada in libera.get(
+                ref,
+                []
+            ):
+                if liberada not in por_ref:
+                    continue
+
+                alvos = [
+                    f".st-key-{chave_card_clicavel('prog_p', liberada)} button",
+                    f".st-key-{chave_card_clicavel('prog_a', liberada)} button",
+                ]
+
+                for alvo in alvos:
+                    regras.append(
+                        f"""
+                        body:has({origem})
+                        {alvo} {{
+                            background:
+                                #eee3ff !important;
+                            border:
+                                2px solid
+                                #7a4bc2 !important;
+                            box-shadow:
+                                0 0 0 3px
+                                rgba(
+                                    122,
+                                    75,
+                                    194,
+                                    .13
+                                ) !important;
+                        }}
+                        """
+                    )
+
+    return "\n".join(regras)
+
+
+def render_disciplina_clicavel(
+    linha,
+    prefixo
+):
+    ref = linha["ref"]
+
+    pre = observacao_prereq(
+        linha
+    )
+
+    abre = lista_nomes(
+        libera.get(
+            ref,
+            []
+        )
+    )
+
+    ajuda = (
+        f"Pré-requisitos: {pre}\n\n"
+        f"Libera: {abre}\n\n"
+        "Clique para marcar ou desmarcar "
+        "como disciplina já cursada."
+    )
+
+    rotulo = (
+        f'{ref} | '
+        f'{linha["carga_horaria"]} h\n\n'
+        f'{linha["nome"]}\n\n'
+        f'{linha["codigo"]}'
+    )
+
+    chave_container = chave_card_clicavel(
+        prefixo,
+        ref
+    )
+
+    with st.container(
+        key=chave_container
+    ):
+        st.button(
+            rotulo,
+            key=(
+                f"btn_{prefixo}_"
+                f"{classe_ref(ref)}"
+            ),
+            help=ajuda,
+            use_container_width=True,
+            on_click=alternar_disciplina,
+            args=(ref,),
+        )
+
+
+def render_matriz_clicavel_periodos():
+    frame = df[
+        df["origem"]
+        == "Matriz por período"
+    ].copy()
+
+    grupos = []
+
+    for periodo in range(1, 11):
+        grupo = frame[
+            frame["periodo_num"]
+            == periodo
+        ].copy().sort_values(
+            "ref"
+        )
+
+        grupos.append(
+            (
+                f"{periodo}º Período",
+                grupo
+            )
+        )
+
+    sem_periodo = frame[
+        frame["periodo"] == ""
+    ].copy().sort_values(
+        "ref"
+    )
+
+    if not sem_periodo.empty:
+        grupos.append(
+            (
+                "Sem período",
+                sem_periodo
+            )
+        )
+
+    with st.container(
+        key="periodos_clicaveis"
+    ):
+        colunas = st.columns(
+            len(grupos),
+            gap="small"
+        )
+
+        for indice, (
+            titulo,
+            grupo
+        ) in enumerate(grupos):
+            with colunas[indice]:
+                ch = int(
+                    grupo[
+                        "carga_horaria"
+                    ].sum()
+                )
+
+                st.html(
+                    f"""
+                    <div class="click-column-header">
+                        <strong>{html.escape(titulo)}</strong>
+                        <span>{ch} h</span>
+                    </div>
+                    """
+                )
+
+                for _, linha in grupo.iterrows():
+                    render_disciplina_clicavel(
+                        linha,
+                        "prog_p"
+                    )
+
+
+def render_matriz_clicavel_areas():
+    frame = df[
+        df["origem"]
+        == "Matriz por área"
+    ].copy()
+
+    areas = sorted(
+        [
+            area
+            for area
+            in frame["area"].unique().tolist()
+            if area
+        ],
+        key=lambda texto: int(
+            texto.split(".")[0]
+        )
+    )
+
+    with st.container(
+        key="areas_clicaveis"
+    ):
+        colunas = st.columns(
+            len(areas),
+            gap="small"
+        )
+
+        for indice, area in enumerate(
+            areas
+        ):
+            grupo = frame[
+                frame["area"]
+                == area
+            ].copy().sort_values(
+                "ref"
+            )
+
+            with colunas[indice]:
+                ch = int(
+                    grupo[
+                        "carga_horaria"
+                    ].sum()
+                )
+
+                st.html(
+                    f"""
+                    <div class="click-column-header">
+                        <strong>
+                            {html.escape(nome_area(area))}
+                        </strong>
+                        <span>{ch} h</span>
+                    </div>
+                    """
+                )
+
+                for _, linha in grupo.iterrows():
+                    render_disciplina_clicavel(
+                        linha,
+                        "prog_a"
+                    )
+
+
 st.html("""
 <style>
 
@@ -1253,47 +1668,12 @@ with tab_prog:
     )
 
     st.caption(
-        "Selecione as disciplinas que você já cursou. "
-        "Elas continuarão aparecendo na matriz e ficarão vermelhas."
+        "Clique diretamente em uma disciplina para marcar "
+        "que ela já foi cursada. "
+        "Clique novamente para desmarcar."
     )
 
-    opcoes = df.sort_values(
-        [
-            "periodo_num",
-            "area",
-            "ref"
-        ],
-        na_position="last"
-    )
-
-    label_por_ref = {
-        linha["ref"]:
-        (
-            f'{linha["nome"]} | '
-            f'{linha["codigo"]} '
-            f'[{linha["ref"]}]'
-        )
-        for _, linha
-        in opcoes.iterrows()
-    }
-
-    concluidas = st.multiselect(
-        "Disciplinas já cursadas",
-        options=list(
-            label_por_ref.keys()
-        ),
-        format_func=lambda ref:
-            label_por_ref[ref],
-        placeholder=(
-            "Selecione uma ou mais disciplinas"
-        )
-    )
-
-    concluidas = set(
-        concluidas
-    )
-
-    c1, c2, c3 = st.columns(3)
+    cursadas = obter_cursadas()
 
     obrig = df[
         df["tipo"] == "Obrigatória"
@@ -1301,34 +1681,54 @@ with tab_prog:
 
     obrig_concl = obrig[
         obrig["ref"].isin(
-            concluidas
+            cursadas
         )
     ]
 
     elet_concl = df[
         (df["tipo"] == "Eletiva")
         & (df["ref"].isin(
-            concluidas
+            cursadas
         ))
     ]
 
+    c1, c2, c3, c4 = st.columns(
+        [1, 1, 1, 1]
+    )
+
     c1.metric(
-        "Disciplinas selecionadas",
-        len(concluidas)
+        "Cursadas",
+        len(cursadas)
     )
 
     c2.metric(
-        "Obrigatórias cursadas",
+        "Obrigatórias",
         len(obrig_concl)
     )
 
     c3.metric(
-        "Eletivas cursadas",
+        "Eletivas",
         len(elet_concl)
     )
 
+    with c4:
+        st.write("")
+        st.button(
+            "Limpar marcações",
+            key="limpar_cursadas",
+            on_click=limpar_disciplinas_cursadas,
+            use_container_width=True,
+            disabled=(
+                len(cursadas) == 0
+            ),
+        )
+
     st.html(
-        """
+        f"""
+        <style>
+            {css_matriz_clicavel()}
+        </style>
+
         <div class="legend">
             <div class="legend-item">
                 <span
@@ -1340,6 +1740,28 @@ with tab_prog:
                 ></span>
                 Disciplina já cursada
             </div>
+
+            <div class="legend-item">
+                <span
+                    class="swatch"
+                    style="
+                        background:#d9f4df;
+                        border-color:#2f8f4e;
+                    "
+                ></span>
+                Pré-requisito da disciplina em foco
+            </div>
+
+            <div class="legend-item">
+                <span
+                    class="swatch"
+                    style="
+                        background:#eee3ff;
+                        border-color:#7a4bc2;
+                    "
+                ></span>
+                Disciplina liberada pela disciplina em foco
+            </div>
         </div>
         """
     )
@@ -1348,9 +1770,7 @@ with tab_prog:
         "Matriz organizada por período"
     )
 
-    render_matriz_periodos(
-        concluidas
-    )
+    render_matriz_clicavel_periodos()
 
     st.divider()
 
@@ -1358,9 +1778,7 @@ with tab_prog:
         "Matriz organizada por área"
     )
 
-    render_matriz_areas(
-        concluidas
-    )
+    render_matriz_clicavel_areas()
 
 
 st.divider()
