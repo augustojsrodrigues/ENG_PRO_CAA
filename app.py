@@ -448,7 +448,12 @@ def render_cards(
     )
 
 
-def matrix_card_html(linha):
+def matrix_card_html(
+    linha,
+    concluidas=None
+):
+    concluidas = concluidas or set()
+
     tipo = linha["tipo"]
 
     classe = (
@@ -456,6 +461,9 @@ def matrix_card_html(linha):
         if tipo == "Obrigatória"
         else "eletiva"
     )
+
+    if linha["ref"] in concluidas:
+        classe += " concluida"
 
     pre = observacao_prereq(linha)
 
@@ -496,7 +504,7 @@ def matrix_card_html(linha):
     """
 
 
-def render_matriz_periodos():
+def render_matriz_periodos(concluidas=None):
     frame = df[
         df["origem"] == "Matriz por período"
     ].copy()
@@ -511,7 +519,10 @@ def render_matriz_periodos():
         )
 
         cards = "".join(
-            matrix_card_html(linha)
+            matrix_card_html(
+                linha,
+                concluidas
+            )
             for _, linha in grupo.iterrows()
         )
 
@@ -549,7 +560,10 @@ def render_matriz_periodos():
 
     if not sem_periodo.empty:
         cards = "".join(
-            matrix_card_html(linha)
+            matrix_card_html(
+                linha,
+                concluidas
+            )
             for _, linha
             in sem_periodo.iterrows()
         )
@@ -586,7 +600,7 @@ def render_matriz_periodos():
     )
 
 
-def render_matriz_areas():
+def render_matriz_areas(concluidas=None):
     frame = df[
         df["origem"] == "Matriz por área"
     ].copy()
@@ -613,7 +627,10 @@ def render_matriz_areas():
         )
 
         cards = "".join(
-            matrix_card_html(linha)
+            matrix_card_html(
+                linha,
+                concluidas
+            )
             for _, linha
             in grupo.iterrows()
         )
@@ -826,10 +843,13 @@ st.html("""
     background: #fff3c9;
 }
 
-.course-card.concluida {
-    outline:
-        3px solid
-        rgba(35, 145, 75, .35);
+.course-card.concluida,
+.matrix-course.concluida {
+    background: #ffd9d9 !important;
+    border: 2px solid #c93636 !important;
+    box-shadow:
+        0 0 0 3px
+        rgba(201, 54, 54, .12) !important;
 }
 
 .card-top {
@@ -1118,7 +1138,7 @@ tab_periodos, tab_areas, tab_matrizes, tab_prog = st.tabs(
         "📅 Por período",
         "🧭 Áreas",
         "📋 Matrizes completas",
-        "✅ Meu progresso",
+        "✅ Minha matriz",
     ]
 )
 
@@ -1228,6 +1248,15 @@ with tab_matrizes:
 
 
 with tab_prog:
+    st.subheader(
+        "Minha matriz curricular"
+    )
+
+    st.caption(
+        "Selecione as disciplinas que você já cursou. "
+        "Elas continuarão aparecendo na matriz e ficarão vermelhas."
+    )
+
     opcoes = df.sort_values(
         [
             "periodo_num",
@@ -1249,17 +1278,22 @@ with tab_prog:
     }
 
     concluidas = st.multiselect(
-        "Marque as disciplinas já concluídas",
+        "Disciplinas já cursadas",
         options=list(
             label_por_ref.keys()
         ),
         format_func=lambda ref:
-            label_por_ref[ref]
+            label_por_ref[ref],
+        placeholder=(
+            "Selecione uma ou mais disciplinas"
+        )
     )
 
     concluidas = set(
         concluidas
     )
+
+    c1, c2, c3 = st.columns(3)
 
     obrig = df[
         df["tipo"] == "Obrigatória"
@@ -1271,101 +1305,62 @@ with tab_prog:
         )
     ]
 
-    if len(obrig) == 0:
-        pct = 0
-    else:
-        pct = (
-            len(obrig_concl)
-            / len(obrig)
-        )
-
-    c1, c2, c3 = st.columns(3)
+    elet_concl = df[
+        (df["tipo"] == "Eletiva")
+        & (df["ref"].isin(
+            concluidas
+        ))
+    ]
 
     c1.metric(
-        "Obrigatórias concluídas",
-        f"{len(obrig_concl)}/{len(obrig)}"
+        "Disciplinas selecionadas",
+        len(concluidas)
     )
 
     c2.metric(
-        "Carga horária obrigatória concluída",
-        f'{obrig_concl["carga_horaria"].sum()} h'
+        "Obrigatórias cursadas",
+        len(obrig_concl)
     )
 
     c3.metric(
-        "Progresso",
-        f"{pct:.0%}"
+        "Eletivas cursadas",
+        len(elet_concl)
     )
 
-    st.progress(
-        min(
-            max(pct, 0),
-            1
-        )
+    st.html(
+        """
+        <div class="legend">
+            <div class="legend-item">
+                <span
+                    class="swatch"
+                    style="
+                        background:#ffd9d9;
+                        border-color:#c93636;
+                    "
+                ></span>
+                Disciplina já cursada
+            </div>
+        </div>
+        """
     )
-
-    liberadas_agora = []
-    bloqueadas_incerto = []
-
-    for _, linha in df.iterrows():
-        ref = linha["ref"]
-
-        if ref in concluidas:
-            continue
-
-        pre_requisitos = refs_de(
-            linha["pre_requisitos_refs"]
-        )
-
-        tem_obs_incerta = (
-            bool(
-                linha[
-                    "pre_requisito_observacao"
-                ]
-            )
-            and not pre_requisitos
-        )
-
-        if tem_obs_incerta:
-            bloqueadas_incerto.append(
-                ref
-            )
-            continue
-
-        if all(
-            pre in concluidas
-            for pre
-            in pre_requisitos
-        ):
-            liberadas_agora.append(
-                ref
-            )
 
     st.subheader(
-        "Disciplinas liberadas"
+        "Matriz organizada por período"
     )
 
-    render_cards(
-        df[
-            df["ref"].isin(
-                liberadas_agora
-            )
-        ],
+    render_matriz_periodos(
         concluidas
     )
 
-    if bloqueadas_incerto:
-        with st.expander(
-            "Disciplinas com informação "
-            "de pré-requisito ainda não confirmada"
-        ):
-            for ref in bloqueadas_incerto:
-                linha = por_ref[ref]
+    st.divider()
 
-                st.write(
-                    f'• {linha["nome"]} '
-                    f'({linha["codigo"]}): '
-                    f'{linha["pre_requisito_observacao"]}'
-                )
+    st.subheader(
+        "Matriz organizada por área"
+    )
+
+    render_matriz_areas(
+        concluidas
+    )
 
 
 st.divider()
