@@ -1,0 +1,116 @@
+﻿ref,nome,codigo,carga_horaria,tipo,periodo,area,pre_requisitos_refs,pre_requisito_observacao,origem
+1A,Cálculo Dif. e Int. 1,PROD0001,60,Obrigatória,1,,,,Matriz por período
+1B,Geometria Analítica,PROD0002,60,Obrigatória,1,,,,Matriz por período
+1C,Química Geral 1,PROD0005,60,Obrigatória,1,,,,Matriz por período
+1D,Introdução ao Desenho,PROD0017,75,Obrigatória,1,,,,Matriz por período
+1E,Elementos de Sociologia,PROD0018,30,Obrigatória,1,,,,Matriz por período
+1F,Introdução à Eng. de Produção,PROD0024,30,Obrigatória,1,,,,Matriz por período
+2A,Física Geral 1,PROD0003,60,Obrigatória,2,,,,Matriz por período
+2B,Algoritmos e Programação,PROD0004,60,Obrigatória,2,,,,Matriz por período
+2C,Probabilidade e Estatística,PROD0006,60,Obrigatória,2,,1A,,Matriz por período
+2D,Cálculo Dif. e Int. 2,PROD0007,60,Obrigatória,2,,1A,,Matriz por período
+2E,Álgebra Linear,PROD0009,60,Obrigatória,2,,1B,,Matriz por período
+2F,Administração para Engenharia,PROD0020,60,Obrigatória,2,,1F,,Matriz por período
+3A,Cálculo Dif. e Int. 3,PROD0008,60,Obrigatória,3,,1B;2D,,Matriz por período
+3B,Física Geral 2,PROD0010,60,Obrigatória,3,,2A,,Matriz por período
+3C,Mecânica 1,PROD0011,60,Obrigatória,3,,2A,,Matriz por período
+3D,Cálculo Numérico,PROD0013,60,Obrigatória,3,,2B;2D,,Matriz por período
+3E,Teoria do Trabalho,PROD0021,30,Obrigatória,3,,,,Matriz por período
+3F,Ecologia Aplicada à Engenharia,PROD0022,30,Obrigatória,3,,1F,,Matriz por período
+3G,Gestão da Produção 1,PROD0032,60,Obrigatória,3,,2F,,Matriz por período
+4A,Cálculo Dif. e Int. 4,PROD0012,60,Obrigatória,4,,,Na imagem o pré-requisito aparece como '??'; precisa ser confirmado.,Matriz por período
+4B,Eletrotécnica,PROD0014,60,Obrigatória,4,,3B,,Matriz por período
+4C,Resistência dos Materiais 1,PROD0015,60,Obrigatória,4,,3C,,Matriz por período
+4D,Fenômenos de Transporte,PROD0016,60,Obrigatória,4,,2A;3A,,Matriz por período
+4E,Engenharia Econômica,PROD0023,60,Obrigatória,4,,1A,,Matriz por período
+4F,Pesquisa Operacional 1,PROD0033,60,Obrigatória,4,,2C;2D;2E;1F,,Matriz por período
+5A,Processos Industriais 1,PROD0025,30,Obrigatória,5,,1C;3B;3G,,Matriz por período
+5B,Pesquisa Operacional 2,PROD0034,60,Obrigatória,5,,3D;4F,,Matriz por período
+5C,Custos de Produção,PROD0035,60,Obrigatória,5,,,Na imagem o pré-requisito aparece como '??'; precisa ser confirmado.,Matriz por período
+5D,Gestão da Qualidade,PROD0036,60,Obrigatória,5,,3G,,Matriz por período
+5E,Gestão da Produção 2,PROD0037,60,Obrigatória,5,,3G,,Matriz por período
+5F,Engenharia de Métodos,PROD0039,60,Obrigatória,5,,2C;3G,,Matriz por período
+5G,Engenharia de Segurança do Trabalho,PROD0040,30,Obrigatória,5,,1C;3B,,Matriz por período
+6A,Processos Industriais 2,PROD0026,30,Obrigatória,6,,4A;4F;5A,,Matriz por período
+6B,Materiais de Const. Civil 1,PROD0027,60,Obrigatória,6,,4C,,Matriz por período
+6C,Português Instr. e Metod. Científ.,PROD0030,30,Obrigatória,6,,,,Matriz por período
+6D,Controle Estat. da Qualidade,PROD0038,60,Obrigatória,6,,2C;5D,,Matriz por período
+7A,Processos Industriais 3,PROD0028,30,Obrigatória,7,,6A,,Matriz por período
+8A,Processos Industriais 4,PROD0029,30,Obrigatória,8,,7A,,Matriz por período
+10A,TCC,PROD0031,30,Obrigatória,10,,3E;3F;4B;4D;4E;5B;5C;5E;5G;6D;8A,,Matriz por período
+10B,Estágio,PROD0041,270,Obrigatória,10,,1D;1E;3E;3F;4B;4C;4E;5B;5C;5E;5F;5G;6A;6D,,Matriz por período
+LIBRAS,Libras,EDUC0058,60,Obrigatória,,,,A disciplina aparece em azul na imagem e foi cadastrada como obrigatória conforme a legenda fornecida.,Matriz por período
+11A,Eng. de Confiabilidade,PROD0042,60,Eletiva,,11. Eng. da Qualidade,2C;5B,,Matriz por área
+11B,Sist. de Gestão da Qualidade,PROD0043,60,Obrigatória,,11. Eng. da Qualidade,5D;6D,,Matriz por área
+11C,Auditoria da Qualidade,PROD0045,60,Obrigatória,,11. Eng. da Qualidade,11B,,Matriz por área
+11D,Ferramentas Av. para Qualidade,PROD0046,60,Obrigatória,,11. Eng. da Qualidade,11B,,Matriz por área
+11E,Gestão de Sistemas Integrados,PROD0047,30,Obrigatória,,11. Eng. da Qualidade,11B,,Matriz por área
+11F,Org. de Pessoal para Qualidade,PROD0048,30,Obrigatória,,11. Eng. da Qualidade,5D,,Matriz por área
+11G,TE em Qualidade,PROD0049,30,Eletiva,,11. Eng. da Qualidade,5D,,Matriz por área
+12A,Engenharia da Confiabilidade,PROD0050,60,Eletiva,,12. Pesquisa Operacional,2C;5B,,Matriz por área
+12B,Análise de Decisão,PROD0051,60,Eletiva,,12. Pesquisa Operacional,5B,,Matriz por área
+12C,Probab. e Proc. Estocásticos 1,PROD0052,60,Eletiva,,12. Pesquisa Operacional,5B,,Matriz por área
+12D,Program. Matemática,PROD0053,60,Eletiva,,12. Pesquisa Operacional,2E;4A;4F,,Matriz por área
+12E,Análise de Regressão,PROD0054,60,Eletiva,,12. Pesquisa Operacional,5B,,Matriz por área
+12F,Engenharia da Manutenção,PROD0055,60,Eletiva,,12. Pesquisa Operacional,5B,,Matriz por área
+12G,Técnicas de Simulação,PROD0056,60,Eletiva,,12. Pesquisa Operacional,5B,,Matriz por área
+12H,Model. e Estrut. de Problemas,PROD0057,30,Eletiva,,12. Pesquisa Operacional,5B,,Matriz por área
+12I,TE em Pesquisa Operacional,PROD0058,30,Eletiva,,12. Pesquisa Operacional,5B,,Matriz por área
+13A,Estratégia,PROD0044,60,Eletiva,,13. Gestão da Produção,2F,,Matriz por área
+13B,Logística 1,PROD0059,60,Eletiva,,13. Gestão da Produção,5B;5E,,Matriz por área
+13C,Logística 2,PROD0060,60,Eletiva,,13. Gestão da Produção,13B,,Matriz por área
+13D,Organiz. do Trabalho,PROD0061,60,Eletiva,,13. Gestão da Produção,3E;5E,,Matriz por área
+13E,Estratégia da Produção,PROD0062,30,Eletiva,,13. Gestão da Produção,5E,,Matriz por área
+13F,TE em Gestão da Produção,PROD0063,30,Eletiva,,13. Gestão da Produção,5E,,Matriz por área
+13G,Gestão da Produção 3,PROD0064,60,Eletiva,,13. Gestão da Produção,5E,,Matriz por área
+13H,Gestão da Produção Aplicada,PROD0065,60,Eletiva,,13. Gestão da Produção,5E,,Matriz por área
+13I,Empreendedorismo,PROD0066,60,Eletiva,,13. Gestão da Produção,,,Matriz por área
+14A,TE em Gest. Econ. e Financeira,PROD0067,30,Eletiva,,14. Gestão Econ. e Fin.,4E,,Matriz por área
+14B,Planejamento de Competitividade,PROD0068,30,Obrigatória,,14. Gestão Econ. e Fin.,3G;4E;13A,,Matriz por área
+14C,Engenharia de Avaliações,PROD0069,45,Eletiva,,14. Gestão Econ. e Fin.,3G;4E,,Matriz por área
+14D,Economia Industrial 1,PROD0070,60,Eletiva,,14. Gestão Econ. e Fin.,4E,,Matriz por área
+14E,Análise Econ. e Financeira 1,PROD0071,60,Eletiva,,14. Gestão Econ. e Fin.,4E;13A,,Matriz por área
+14F,Análise de Projetos,PROD0072,60,Eletiva,,14. Gestão Econ. e Fin.,4E,,Matriz por área
+14G,Economia 1,PROD0073,60,Eletiva,,14. Gestão Econ. e Fin.,4E,,Matriz por área
+14H,Microeconomia 1,PROD0074,60,Eletiva,,14. Gestão Econ. e Fin.,4E,,Matriz por área
+15A,Sist. de Apoio à Decisão,PROD0075,30,Eletiva,,15. Gestão da Inform.,15F,,Matriz por área
+15B,Planej. de Sist. de Informação,PROD0076,30,Eletiva,,15. Gestão da Inform.,15A;15D;15F,,Matriz por área
+15C,TE em Sistemas de Informação,PROD0077,30,Eletiva,,15. Gestão da Inform.,15F,,Matriz por área
+15D,Sistemas de Int. Gerencial e Executivo,PROD0078,30,Eletiva,,15. Gestão da Inform.,15F,,Matriz por área
+15E,Manufatura Integrada por Computador,PROD0037,60,Eletiva,,15. Gestão da Inform.,3G;4F,"O código aparece como PROD0037 na imagem, duplicando Gestão da Produção 2. Convém conferir no PPC/SIGAA.",Matriz por área
+15F,Gestão da Informação,PROD0080,30,Eletiva,,15. Gestão da Inform.,3G,,Matriz por área
+15G,Gestão da Tecnologia da Informação,PROD0081,60,Eletiva,,15. Gestão da Inform.,3G,,Matriz por área
+15H,Gestão do Conhec.,PROD0082,60,Eletiva,,15. Gestão da Inform.,15F,,Matriz por área
+16A,Sistemas de Gestão Ambiental,PROD0083,60,Obrigatória,,16. Gestão Ambiental,5D,,Matriz por área
+16B,Auditoria de Sist. de Gestão Ambiental,PROD0084,60,Obrigatória,,16. Gestão Ambiental,16A,,Matriz por área
+16C,Economia do Meio Ambiente 1,PROD0085,60,Obrigatória,,16. Gestão Ambiental,3G;4E,,Matriz por área
+16D,Av. Ambiental de Processos e Produtos,PROD0086,60,Obrigatória,,16. Gestão Ambiental,16A,,Matriz por área
+16E,TE em Engenharia de Produção 8,PROD0087,30,Eletiva,,16. Gestão Ambiental,5D,,Matriz por área
+16F,TE em Gestão Ambiental,PROD0088,30,Eletiva,,16. Gestão Ambiental,5D,,Matriz por área
+17A,Projeto de Sist. de Produção,PROD0089,60,Eletiva,,17. Eng. do Produto,5E,,Matriz por área
+17B,Engenharia de Produto,PROD0090,60,Eletiva,,17. Eng. do Produto,5E,,Matriz por área
+17C,Planejamento do Arranjo Físico,PROD0091,60,Eletiva,,17. Eng. do Produto,5E,,Matriz por área
+17D,TE em Engenharia do Produto,PROD0092,30,Eletiva,,17. Eng. do Produto,5E,,Matriz por área
+17E,Lab. de Eng. de Produção,PROD0093,60,Eletiva,,17. Eng. do Produto,5E,,Matriz por área
+17F,TE em Projeto do Produto e da Fábrica,PROD0094,30,Eletiva,,17. Eng. do Produto,5E,,Matriz por área
+17G,Projeto do Produto,PROD0095,60,Eletiva,,17. Eng. do Produto,5E,,Matriz por área
+18A,Probab. e Processos Estocásticos 2,PROD0096,60,Eletiva,,18. Av. Eng. de Prod. 1,12C,,Matriz por área
+18B,Gestão da Inovação,PROD0097,30,Obrigatória,,18. Av. Eng. de Prod. 1,,O pré-requisito aparece como 'iB' na imagem e não foi convertido para evitar adivinhação.,Matriz por área
+18C,Análise de Séries Temporais,PROD0098,60,Eletiva,,18. Av. Eng. de Prod. 1,2C;5B;12C,,Matriz por área
+18D,Teoria das Filas,PROD0099,60,Eletiva,,18. Av. Eng. de Prod. 1,5B,,Matriz por área
+18E,Fundamentos de Inteligência Artificial,PROD0100,60,Eletiva,,18. Av. Eng. de Prod. 1,4A,,Matriz por área
+18F,Metrologia,PROD0101,60,Eletiva,,18. Av. Eng. de Prod. 1,11B,,Matriz por área
+19A,TE em Eng. de Prod. 9,PROD0102,60,Eletiva,,19. Av. Eng. de Prod. 2,5B;5E,,Matriz por área
+19B,TE em Eng. de Prod. 1,PROD0103,30,Eletiva,,19. Av. Eng. de Prod. 2,5B;5E,,Matriz por área
+19C,TE em Eng. de Prod. 2,PROD0104,30,Obrigatória,,19. Av. Eng. de Prod. 2,5B;5E,,Matriz por área
+19D,TE em Eng. de Prod. 3,PROD0105,60,Eletiva,,19. Av. Eng. de Prod. 2,5B;5E,,Matriz por área
+19E,TE em Eng. de Prod. 4,PROD0106,60,Obrigatória,,19. Av. Eng. de Prod. 2,5B;5E,,Matriz por área
+19F,TE em Eng. de Prod. 5,PROD0107,60,Eletiva,,19. Av. Eng. de Prod. 2,5B;5E,,Matriz por área
+19G,TE em Eng. de Prod. 7,PROD0109,60,Eletiva,,19. Av. Eng. de Prod. 2,5B;5E,,Matriz por área
+20A,Gestão de Projetos,PROD0110,60,Eletiva,,20. Gestão de Projetos,3G;4F,,Matriz por área
+20B,Processos Organiz. para Projetos,PROD0111,30,Eletiva,,20. Gestão de Projetos,20A,,Matriz por área
+20C,Gestão e Seleção de Portfólio,PROD0112,60,Eletiva,,20. Gestão de Projetos,20A,,Matriz por área
+20D,Gestão de Riscos em Projetos,PROD0113,60,Eletiva,,20. Gestão de Projetos,5B;20A,,Matriz por área
+20E,Gestão de Contratação em Projetos,PROD0114,60,Eletiva,,20. Gestão de Projetos,20A,,Matriz por área
+20F,Ferram. para Gestão de Projetos,PROD0115,30,Eletiva,,20. Gestão de Projetos,20A,,Matriz por área
+20G,TE em Gestão de Projetos,PROD0116,30,Eletiva,,20. Gestão de Projetos,20A,,Matriz por área
